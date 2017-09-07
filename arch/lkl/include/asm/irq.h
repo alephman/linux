@@ -8,5 +8,6 @@ void run_irqs(void);
 void set_irq_pending(int irq);
 
 #include <uapi/asm/irq.h>
+#include <asm-generic/irq.h>
 
 #endif

@@ -42,7 +42,7 @@ export CFLAGS += -I$(OUTPUT)/include -Iinclude -Wall -g -O2 -Wextra \
 
 OUTPUT_FORMAT = $(shell $(LD) -r -print-output-format)
 
-ifneq (,$(filter $(OUTPUT_FORMAT),elf64-x86-64 elf32-i386 elf64-x86-64-freebsd elf32-littlearm))
+ifneq (,$(filter $(OUTPUT_FORMAT),elf64-x86-64 elf32-i386 elf64-x86-64-freebsd elf32-littlearm  elf64-littleaarch64))
   OUTPUT_DEF = $(shell echo | $(CC) -dM -E -)
   CFLAGS   += -fPIC -pthread
   ifeq (,$(filter $(OUTPUT_DEF),__ANDROID__))
@@ -131,8 +131,9 @@ endif
 TEST_TARGETS        := test valgrind gdb
 
 $(OUTPUT)tests/boot: $(OUTPUT)tests/boot-in.o $(OUTPUT)liblkl.a
+$(OUTPUT)tests/uartapp: $(OUTPUT)tests/uartapp-in.o $(OUTPUT)liblkl.a
 $(OUTPUT)tests/net-test: $(OUTPUT)tests/net-test-in.o $(OUTPUT)liblkl.a
-$(TEST_TARGETS): $(OUTPUT)tests/boot $(OUTPUT)tests/net-test
+$(TEST_TARGETS): $(OUTPUT)tests/boot $(OUTPUT)tests/net-test  $(OUTPUT)tests/uartapp
 
 # because of libdl, liblkl-hijack will not compile on windows
 # fortunately, the test target will handle a missing libhijack.so correctly
@@ -150,7 +151,7 @@ $(OUTPUT)lib/lkl.o:
 $(OUTPUT)liblkl.a: $(OUTPUT)lib/lkl-in.o $(OUTPUT)lib/lkl.o
 	$(QUIET_AR)$(AR) -rc $@ $^
 
-$(OUTPUT)liblkl$(SOSUF) $(OUTPUT)liblkl-hijack$(SOSUF) $(OUTPUT)lklfuse$(EXESUF) $(OUTPUT)fs2tar$(EXESUF) $(OUTPUT)cptofs$(EXESUF) $(OUTPUT)tests/boot $(OUTPUT)tests/net-test:
+$(OUTPUT)liblkl$(SOSUF) $(OUTPUT)liblkl-hijack$(SOSUF) $(OUTPUT)lklfuse$(EXESUF) $(OUTPUT)fs2tar$(EXESUF) $(OUTPUT)cptofs$(EXESUF) $(OUTPUT)tests/boot $(OUTPUT)tests/uartapp  $(OUTPUT)tests/net-test:
 	$(QUIET_LINK)$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(OUTPUT)cpfromfs$(EXESUF): cptofs$(EXESUF)
@@ -176,7 +177,7 @@ clean:
 	$(call QUIET_CLEAN, "host libraries")$(RM) $(OUTPUT)/liblkl.a liblkl$(SOSUF)
 	$(call QUIET_CLEAN, "hijack library")$(RM) $(OUTPUT)/liblkl-hijack$(SOSUF)
 	$(call QUIET_CLEAN, programs)$(RM) $(ALL_PROGRAMS)
-	$(call QUIET_CLEAN, tests)$(RM) tests/boot tests/net-test
+	$(call QUIET_CLEAN, tests)$(RM) tests/boot tests/net-test tests/uartapp
 
 $(TEST_TARGETS):
 	$(MAKE) -C tests $@

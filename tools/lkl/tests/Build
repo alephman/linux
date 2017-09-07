@@ -1,2 +1,3 @@
 boot-y += boot.o
 net-test-y += net-test.o
+uartapp-y += uartapp.o

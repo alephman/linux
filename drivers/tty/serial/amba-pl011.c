@@ -62,6 +62,9 @@
 
 #include "amba-pl011.h"
 
+
+#define LKL_UARTTEST
+
 #define UART_NR			14
 
 #define SERIAL_AMBA_MAJOR	204
@@ -1692,6 +1695,10 @@ static int pl011_hwinit(struct uart_port *port)
 
 	uap->port.uartclk = clk_get_rate(uap->clk);
 
+#ifdef LKL_UARTTEST
+	uap->port.uartclk = 0x124f800; 
+#endif
+
 	/* Clear pending error and receive interrupts */
 	pl011_write(UART011_OEIS | UART011_BEIS | UART011_PEIS |
 		    UART011_FEIS | UART011_RTIS | UART011_RXIS,
@@ -2331,6 +2338,10 @@ static int __init pl011_console_setup(struct console *co, char *options)
 	}
 
 	uap->port.uartclk = clk_get_rate(uap->clk);
+
+#ifdef LKL_UARTTEST
+	uap->port.uartclk = 0x124f800; 
+#endif
 
 	if (uap->vendor->fixed_options) {
 		baud = uap->fixed_baud;

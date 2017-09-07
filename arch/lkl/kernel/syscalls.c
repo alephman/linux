@@ -16,8 +16,16 @@
 #include <asm/cpu.h>
 #include <asm/sched.h>
 
+#include <linux/amba/bus.h>
+
+
 static asmlinkage long sys_virtio_mmio_device_add(long base, long size,
 						  unsigned int irq);
+
+
+
+static asmlinkage long sys_amba_device_add(long base, long size,
+						  unsigned int irq, unsigned int periphid);
 
 typedef long (*syscall_handler_t)(long arg1, ...);
 
@@ -239,3 +247,51 @@ exit_device_put:
 
 	return ret;
 }
+
+
+
+typedef unsigned long uintptr_t;
+typedef unsigned int uint32_t;
+typedef uintptr_t vaddr_t;
+
+static inline void write32(uint32_t val, vaddr_t addr)
+{
+        *(volatile uint32_t *)addr = val;
+}
+
+SYSCALL_DEFINE4(amba_device_add, long, base, long, size, unsigned int,
+                irq,unsigned int, periphid )
+{
+        struct amba_device *pdev;
+        int ret;
+
+        char devname[32];
+
+        snprintf(devname, 30, " %x.uart",
+                        base);
+        printk("uart devname:%s \n",devname);
+
+        pdev = amba_device_alloc(devname, 0,0);
+        if (!pdev) {
+                dev_err(&pdev->dev, "%s: Unable to device alloc for \n", __func__);
+                return -ENOMEM;
+        }
+
+        pdev->res.start=base;
+        pdev->res.end=base + size - 1;
+        pdev->res.flags=IORESOURCE_MEM;
+
+        pdev->irq[0] =irq;
+
+        pdev->periphid=periphid;
+
+        ret = amba_device_add(pdev, &iomem_resource);
+        if (ret < 0) {
+                dev_err(&pdev->dev, "%s: Unable to add \n", __func__);
+                return -ENOMEM;
+        }
+
+
+        return ret;
+}
+
